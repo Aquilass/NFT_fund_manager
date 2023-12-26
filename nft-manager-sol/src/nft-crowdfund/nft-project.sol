@@ -5,20 +5,28 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {console2} from "forge-std/console2.sol";
 contract NFTProject is ERC721URIStorage {
+    // role
     address public owner;
+    address[] public investors;
+    // waitTimeBlock is the time to wait before the project owner can withdraw the revenue
     uint256 public initialBlockTime = 0;
     uint256 public waitWithdrawTimeBlock = 0;
     uint256 public waitInvestTimeBlock = 0;
-    address[] public investors;
+    // original revenue share
     uint256 public investorRevenueShare = 20;
     uint256 public investorRoyaltyShare = 20;
+    // total revenue
     uint256 public investorTotalRevenue = 0;
     uint256 public totalInvestment = 0;
     uint256 public totalRevenue = 0;
     uint256 public totalRoyalty = 0;
+    // project owner revenue share
     uint256 public projectOwnerRoyaltyShare = 0;
     uint256 public projectOwnerRevenueShare = 0;
     uint256 public decimal = 18;
+    // price & fee
+    uint256 public initialPrice = 0.001 ether;
+    uint256 public fee = 0.001 ether;
 
     mapping(address => uint256) public investment;
     mapping(address => uint256) public investRevenue;
@@ -35,8 +43,16 @@ contract NFTProject is ERC721URIStorage {
         projectOwnerRevenueShare = _projectOwnerRevenueShare;
         // _setDefaultRoyalty(msg.sender, 100);
     }
+    function setFee(uint256 _fee) external onlyOwner {
+        fee = _fee;
+    }
+    function transferFrom(address from, address to, uint256 tokenId) public override {
+        require(msg.value >= fee, "sent ether is lower than fee");
+        require(block.timestamp > initialBlockTime + waitWithdrawTimeBlock);
+        super.transferFrom(from, to, tokenId);
+    }
     function mint(address to, uint256 tokenId) external payable {
-        require(msg.value > 0.001 ether);
+        require(msg.value > fee, "sent ether is lower than fee");
         _mint(to, tokenId);
         console2.log("msg.value", msg.value);
         uint256 investorRevenueShareAmount = msg.value * investorRevenueShare / 100;
@@ -52,6 +68,7 @@ contract NFTProject is ERC721URIStorage {
         require(msg.sender == owner);
         _;
     }
+    
     function _distributeFee (uint256 mintAmount ) internal {
         for (uint256 i = 0; i < investors.length; i++) {
             uint256 investorShare = mintAmount * investment[investors[i]] / totalInvestment;

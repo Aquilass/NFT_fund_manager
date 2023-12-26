@@ -1,7 +1,7 @@
 //spdx-license-identifier: MIT
 pragma solidity ^0.8.19;
-import "../src/nft-manager.sol";
-import "../src/nft-project.sol";
+import "../src/nft-manager/nft-manager.sol";
+import "../src/nft-crowdfund/nft-project.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Royalty.sol";
 import "forge-std/Test.sol";
 import {console2} from "forge-std/console2.sol";
