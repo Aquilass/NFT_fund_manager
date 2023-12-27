@@ -3,6 +3,7 @@ pragma solidity ^0.8.19;
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Royalty.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "../src/nft-manager/nftManagerBase.sol";
 
 interface Token {
 
@@ -97,7 +98,7 @@ contract Standard_Token is Token {
 }
 
 
-contract NFTManager is ERC20, ReentrancyGuard {
+contract NFTManager is ERC20, ReentrancyGuard, nf {
     uint256 total_amount  = 0;
     uint256 public totalInvestment = 0;
     uint256 public totalRevenue = 0;
@@ -121,7 +122,15 @@ contract NFTManager is ERC20, ReentrancyGuard {
     // management contract goal
     uint256 public goal = 0;
 
+    // phase timelock
+    uint256 public investPhase = 0;
+    uint256 public managerInvestPhase = 0;
+    uint256 public redeemPhase = 0;
+
     constructor() ERC20("NFTManager", "NFTM") {
+        owner = msg.sender;
+        initialBlockTime = block.timestamp;
+        waitWithdrawTimeBlock = 100;
     }
     modifier onlyOwner() {
         require(msg.sender == owner);
@@ -131,10 +140,15 @@ contract NFTManager is ERC20, ReentrancyGuard {
         require(msg.sender == manager);
         _;
     }
+    modifier onlyInvestor() {
+        require(investment[msg.sender] > 0);
+        _;
+    }
 
     event Invest(address indexed _from, uint256 _value);
     event ManagerInvest(address indexed _to, uint256 _value);
     event Withdraw(address indexed _from, uint256 _value);
+
     function withdrawRevenue() public payable nonReentrant {
         address payable receiver = payable(msg.sender);
         require(block.timestamp > initialBlockTime + waitWithdrawTimeBlock);
@@ -162,5 +176,86 @@ contract NFTManager is ERC20, ReentrancyGuard {
         _mint(to, amount);
         total_amount += amount;
         emit Invest(to, amount);
+    }
+    function checkVerified(address _weth) public view returns (bool) {
+        ERC20 weth = ERC20(_weth);
+        return weth.allowance(address(this), manager) > 0;
+    }
+
+    function closeInvest () public onlyOwner {
+        require(total_amount >= goal);
+        verified = true;
+    }
+
+        /// @notice Execute arbitrary calldata to perform a buy, creating a party
+    ///         if it successfully buys the NFT.
+    /// @param callTarget The target contract to call to buy the NFT.
+    /// @param callValue The amount of ETH to send with the call.
+    /// @param callData The calldata to execute.
+    /// @param governanceOpts The options used to initialize governance in the
+    ///                       `Party` instance created if the buy was successful.
+    /// @param proposalEngineOpts The options used to initialize the proposal
+    ///                           engine in the `Party` instance created if the
+    ///                           crowdfund wins.
+    /// @param hostIndex If the caller is a host, this is the index of the caller in the
+    ///                  `governanceOpts.hosts` array.
+    /// @return party_ Address of the `Party` instance created after its bought.
+    function buy(
+        address payable callTarget,
+        uint96 callValue,
+        bytes memory callData,
+        FixedGovernanceOpts memory governanceOpts,
+        ProposalStorage.ProposalEngineOpts memory proposalEngineOpts,
+        uint256 hostIndex
+    ) external onlyDelegateCall returns (Party party_) {
+        // This function can be optionally restricted in different ways.
+        bool isValidatedGovernanceOpts;
+        if (onlyHostCanBuy) {
+            // Only a host can call this function.
+            _assertIsHost(msg.sender, governanceOpts, proposalEngineOpts, hostIndex);
+            // If _assertIsHost() succeeded, the governance opts were validated.
+            isValidatedGovernanceOpts = true;
+        } else if (address(gateKeeper) != address(0)) {
+            // `onlyHostCanBuy` is false and we are using a gatekeeper.
+            // Only a contributor can call this function.
+            _assertIsContributor(msg.sender);
+        }
+        {
+            // Ensure that the crowdfund is still active.
+            CrowdfundLifecycle lc = getCrowdfundLifecycle();
+            if (lc != CrowdfundLifecycle.Active) {
+                revert WrongLifecycleError(lc);
+            }
+        }
+
+        // Temporarily set to non-zero as a reentrancy guard.
+        settledPrice = type(uint96).max;
+
+        // Buy the NFT and check NFT is owned by the crowdfund.
+        (bool success, bytes memory revertData) = _buy(
+            nftContract,
+            nftTokenId,
+            callTarget,
+            callValue,
+            callData
+        );
+
+        if (!success) {
+            if (revertData.length > 0) {
+                revertData.rawRevert();
+            } else {
+                revert FailedToBuyNFTError(nftContract, nftTokenId);
+            }
+        }
+
+        return
+            _finalize(
+                nftContract,
+                nftTokenId,
+                callValue,
+                governanceOpts,
+                proposalEngineOpts,
+                isValidatedGovernanceOpts
+            );
     }
 }

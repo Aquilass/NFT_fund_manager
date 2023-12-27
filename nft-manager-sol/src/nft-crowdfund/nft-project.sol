@@ -28,19 +28,30 @@ contract NFTProject is ERC721URIStorage {
     uint256 public initialPrice = 0.001 ether;
     uint256 public fee = 0.001 ether;
 
+    // invest factor
+    bool public investable = true;
+
     mapping(address => uint256) public investment;
-    mapping(address => uint256) public investRevenue;
+    mapping(address => uint256) public alreadyWithdrawRevenue;
 
+    struct initData{
+        uint256 waitWithdrawTimeBlock;
+        uint256 waitInvestTimeBlock;
+        uint256 investorRevenueShare;
+        uint256 investorRoyaltyShare;
+    }
 
-
-    constructor(uint256 _waitTimeBlock, uint256 _waitInvestTimeBlock, uint256 _waitWithdrawTimeBlock, uint256 _projectOwnerRoyaltyShare, uint256 _projectOwnerRevenueShare
-    ) ERC721("NFTManager", "NFTM") {
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+    constructor(initData memory _initData) ERC721("NFTManager", "NFTM") {
         owner = msg.sender;
         initialBlockTime = block.timestamp;
-        waitWithdrawTimeBlock = _waitWithdrawTimeBlock;
-        waitInvestTimeBlock = _waitInvestTimeBlock;
-        projectOwnerRoyaltyShare = _projectOwnerRoyaltyShare;
-        projectOwnerRevenueShare = _projectOwnerRevenueShare;
+        waitWithdrawTimeBlock = _initData.waitWithdrawTimeBlock;
+        waitInvestTimeBlock = _initData.waitInvestTimeBlock;
+        investorRevenueShare = _initData.investorRevenueShare;
+        investorRoyaltyShare = _initData.investorRoyaltyShare;
         // _setDefaultRoyalty(msg.sender, 100);
     }
     function setFee(uint256 _fee) external onlyOwner {
@@ -49,6 +60,9 @@ contract NFTProject is ERC721URIStorage {
     function transferFrom(address from, address to, uint256 tokenId) public override {
         require(msg.value >= fee, "sent ether is lower than fee");
         require(block.timestamp > initialBlockTime + waitWithdrawTimeBlock);
+        uint256 investorRoyaltyShareAmount = msg.value * investorRoyaltyShare / 100;
+        investorTotalRevenue += investorRoyaltyShareAmount;
+        totalRoyalty += fee;
         super.transferFrom(from, to, tokenId);
     }
     function mint(address to, uint256 tokenId) external payable {
@@ -56,34 +70,22 @@ contract NFTProject is ERC721URIStorage {
         _mint(to, tokenId);
         console2.log("msg.value", msg.value);
         uint256 investorRevenueShareAmount = msg.value * investorRevenueShare / 100;
-        uint256 investorRoyaltyShareAmount = msg.value * investorRoyaltyShare / 100;
         investorTotalRevenue += (investorRevenueShareAmount + investorRoyaltyShareAmount);
-        uint256 totalShareAmount = investorRevenueShareAmount + investorRoyaltyShareAmount;
-        console2.log("totalShareAmount", totalShareAmount);
-        _distributeFee(totalShareAmount);
-        totalRevenue += (msg.value - investorRoyaltyShareAmount);
-        totalRoyalty += (msg.value - investorRoyaltyShareAmount);
-    }
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
-    
-    function _distributeFee (uint256 mintAmount ) internal {
-        for (uint256 i = 0; i < investors.length; i++) {
-            uint256 investorShare = mintAmount * investment[investors[i]] / totalInvestment;
-            investRevenue[investors[i]] += investorShare;
-            console2.log("investRevenue[investors[i]]", investRevenue[investors[i]]);
-            console2.log("investors", investors[i]);
-            console2.log("investorShare", investorShare);
-            console2.log("mintAmount", mintAmount);
-        }
+        totalRevenue += msg.value;
     }
     function invest() external payable {
+        require(investable == true);
         require(msg.value > 0);
         investors.push(msg.sender);
         totalInvestment += msg.value;
         investment[msg.sender] += msg.value;
+    }
+    function investorWithdrawInvest() external payable{
+        require(investment[msg.sender] > 0);
+        require(block.timestamp > initialBlockTime + waitInvestTimeBlock + waitWithdrawTimeBlock);
+        address payable receiver = payable(msg.sender);
+        investment[msg.sender] = 0;
+        receiver.transfer(investment[msg.sender]);
     }
     function withdrawRevenue() external payable {
         address payable receiver = payable(msg.sender);
@@ -91,6 +93,10 @@ contract NFTProject is ERC721URIStorage {
         console2.log("investRevenue[msg.sender]", investRevenue[msg.sender]);
         // require(block.timestamp > initialBlockTime + waitTimeBlock);
         require(investment[msg.sender] > 0);
+        require(block.timestamp > initialBlockTime + waitInvestTimeBlock);
+        uint256 investorToralShare = investorTotalRevenue * investment[msg.sender] / totalInvestment;
+        console2.log("investorToralShare", investorToralShare);
+        uint256 investorWithdrawRevenue = investorToralShare - alreadyWithdrawRevenue[msg.sender];
         receiver.transfer(investRevenue[msg.sender]);
 
         // require(investment[msg.sender] > 0 && 
