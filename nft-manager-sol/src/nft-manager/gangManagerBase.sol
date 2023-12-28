@@ -1,20 +1,21 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity 0.8.20;
 
-import "../tokens/IERC721.sol";
-import "../party/Party.sol";
-import "../utils/LibSafeERC721.sol";
-import "../globals/IGlobals.sol";
-import "../gatekeepers/IGateKeeper.sol";
+// import "../tokens/IERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+// import "../party/Party.sol";
+// import "../utils/LibSafeERC721.sol";
+// import "../globals/IGlobals.sol";
+// import "../gatekeepers/IGateKeeper.sol";
 
-import "./Crowdfund.sol";
+// import "./Crowdfund.sol";
 
 // Base for BuyCrowdfund and CollectionBuyCrowdfund
-abstract contract nftManagerBase {
+abstract contract gangManagerBase {
 
 
-    event Won(Party party, IERC721[] tokens, uint256[] tokenIds, uint256 settledPrice);
-    event Lost();
+    // event Won(Party party, IERC721[] tokens, uint256[] tokenIds, uint256 settledPrice);
+    // event Lost();
 
     error MaximumPriceError(uint96 callValue, uint96 maximumPrice);
     error NoContributionsError();
@@ -29,7 +30,8 @@ abstract contract nftManagerBase {
     uint96 public settledPrice;
 
     // Set the `Globals` contract.
-    constructor(IGlobals globals) Crowdfund(globals) {}
+    // constructor(IGlobals globals) Crowdfund(globals) {}
+    
 
     // Execute arbitrary calldata to perform a buy, creating a party
     // if it successfully buys the NFT.
@@ -57,7 +59,7 @@ abstract contract nftManagerBase {
             return (false, r);
         }
         // Return whether the NFT was successfully bought.
-        return (token.safeOwnerOf(tokenId) == address(this), "");
+        // return (token.safeOwnerOf(tokenId) == address(this), "");
     }
 
     function _isCallAllowed(
@@ -89,4 +91,5 @@ abstract contract nftManagerBase {
         // All other calls are allowed.
         return true;
     }
+    
 }
