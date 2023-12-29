@@ -1,8 +1,14 @@
 //spdx-license-identifier: MIT
 pragma solidity ^0.8.19;
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Royalty.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+// import "../../src/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+// import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
+// import "../contracts/token/ERC721/extensions/ERC721Royalty.sol";
+// import "../contracts/token/ERC20/ERC20.sol";
+// import "../contracts/utils/ReentrancyGuard.sol";
 import "./gangManagerBase.sol";
 import "../nft-crowdfund/gangCrowdFund.sol";
 
@@ -104,7 +110,7 @@ contract GangManager is ERC20, ReentrancyGuard, gangManagerBase {
 
     }
     // erc20 functions
-    
+
 
     function transfer(address to, uint256 value) public override returns (bool) {
         address owner = _msgSender();

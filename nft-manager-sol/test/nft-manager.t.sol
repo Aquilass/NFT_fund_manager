@@ -58,6 +58,13 @@ contract gangManagerTest is Test {
         // assertEq(nftManager.managerOnlyInvestVerified(), true);
         // assertEq(nftManager.targetMustVerified(), false);
     }
+    function testMintandtransfer() public {
+        vm.startPrank(user1);
+        // nftManager._mint(user1, 1);
+        // assertEq(nftManager.ownerOf(1), user1);
+        // nftManager.transferFrom(user1, user2, 1);
+        // assertEq(nftManager.ownerOf(1), user2);
+    }
 
     // function setUp() public {
     //     nftProject = new NFTProject(0, 0, 0, 0, 0);

@@ -74,7 +74,7 @@ contract NFTCrowdFund is ERC721URIStorage, ReentrancyGuard {
     function setFee(uint256 _fee) external onlyOwner {
         fee = _fee;
     }
-    function transferNFT(address from, address to, uint256 tokenId) public payable {
+    function transferFrom(address from, address to, uint256 tokenId) public payable override(ERC721,IERC721) {
         require(msg.value >= fee, "sent ether is lower than fee");
         require(block.timestamp > initialBlockTime + waitWithdrawTimeBlock);
         totalRoyalty += fee;
