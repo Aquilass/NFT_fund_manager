@@ -4,3 +4,4 @@
 [submodule "nft-manager-sol/lib/openzeppelin-contracts"]
 	path = nft-manager-sol/lib/openzeppelin-contracts
 	url = https://github.com/Aquilass/openzeppelin-contracts
+
