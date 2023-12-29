@@ -1,6 +1,6 @@
 [submodule "nft-manager-sol/lib/forge-std"]
-	path = nft-manager-sol/lib/forge-std
-	url = https://github.com/foundry-rs/forge-std
+   path = nft-manager-sol/lib/forge-std
+   url = https://github.com/foundry-rs/forge-std
 [submodule "nft-manager-sol/lib/openzeppelin-contracts"]
 	path = nft-manager-sol/lib/openzeppelin-contracts
-	url = https://github.com/OpenZeppelin/openzeppelin-contracts
+	url = https://github.com/Aquilass/openzeppelin-contracts
