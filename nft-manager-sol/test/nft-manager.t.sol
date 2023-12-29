@@ -9,8 +9,11 @@ import {console2} from "forge-std/console2.sol";
 
 
 contract gangManagerTest is Test {
+    // gangCrowdFund config
+    GangCrowdFund public nftCrowdFund;
     // gangManager config
     GangManager public nftManager;
+
     address public owner = makeAddr("owner");
     address public manager = makeAddr("manager");
     address public guarantor = makeAddr("guarantor");
@@ -19,10 +22,28 @@ contract gangManagerTest is Test {
     address public user2 = makeAddr("user2");
     address public user3 = makeAddr("user3");
     function setUp() public {
+        // role setUp
+        deal(user1, 10 ether);
+        deal(user2, 10 ether);
+        deal(user3, 10 ether);
+        // GangCrowdFund setup
+        vm.startPrank(owner);
+        GangCrowdFund.GangCrowdFundOpts memory crowdFundOpts;
+        crowdFundOpts = GangCrowdFund.GangCrowdFundOpts(
+            "chickenGangGang",
+            "CGG",
+            guarantor,
+            2,
+            2,
+            200,
+            200
+        );
+        nftCrowdFund = new GangCrowdFund(crowdFundOpts);
+        // GangManager setup
         // need to import GangManagerOpts to use it
-        GangManager.GangManagerOpts memory opts;
+        GangManager.GangManagerOpts memory gangManagerOpts;
         // GangManagerOpts memory opts;
-        opts = GangManager.GangManagerOpts(
+        gangManagerOpts = GangManager.GangManagerOpts(
             "NFTManager",
             "NFTM",
             guarantor,
@@ -35,16 +56,21 @@ contract gangManagerTest is Test {
             true,
             false
         );
-        
-        nftManager = new GangManager(opts);
+        nftManager = new GangManager(gangManagerOpts);
+        vm.stopPrank();
     }
     function test_init() public {
+        // gangCrowdFund
+        console2.log("crowdFund name", nftCrowdFund.name());
+        console2.log("crowdFund symbol", nftCrowdFund.symbol());
         (address guarantor, address manager, address owner) = nftManager.getRole();
         console2.log("guarantor", guarantor);
         console2.log("manager", manager);
         console2.log("owner", owner);
         console2.log("name", nftManager.name());
         console2.log("symbol", nftManager.symbol());
+        // (uint256 
+        // console2.log("getContractPhase", );
         // console2.log(nftManager.getNameAndSymbol());
         // nftManager.init(opts);
         // assertEq(nftManager.guarantor(), address(this));
@@ -58,12 +84,59 @@ contract gangManagerTest is Test {
         // assertEq(nftManager.managerOnlyInvestVerified(), true);
         // assertEq(nftManager.targetMustVerified(), false);
     }
-    function testMintandtransfer() public {
+    function test_CrowdFund_invest_withdraw() public {
         vm.startPrank(user1);
-        // nftManager._mint(user1, 1);
-        // assertEq(nftManager.ownerOf(1), user1);
-        // nftManager.transferFrom(user1, user2, 1);
-        // assertEq(nftManager.ownerOf(1), user2);
+        vm.expectRevert();
+        nftCrowdFund.invest();
+        nftCrowdFund.invest{value: 1 ether}();
+        console2.log("user1 invest", nftCrowdFund.getInvestment(user1));
+        console2.log("block number", block.number);
+        vm.roll(6);
+        vm.expectRevert();
+        nftCrowdFund.invest{value: 1 ether}();
+        nftCrowdFund.investorWithdrawInvest();
+        console2.log("block number", block.number);
+        console2.log("user1 invest", nftCrowdFund.getInvestment(user1));
+    }
+    function testMint() public {
+        vm.startPrank(user1);
+        nftCrowdFund.invest{value: 1 ether}();
+        console2.log("user1 invest", nftCrowdFund.getInvestment(user1));
+        console2.log("block number", block.number);
+        vm.stopPrank();
+        vm.startPrank(user2);
+        nftCrowdFund.invest{value: 1 ether}();
+        console2.log("user1 invest", nftCrowdFund.getInvestment(user1));
+        console2.log("block number", block.number);
+        vm.roll(4);
+        nftCrowdFund.mint{value: 0.001 ether}(user2, 1);
+        console2.log("user2 balance", nftCrowdFund.balanceOf(user2));
+        console2.log("block number", block.number);
+        console2.log("user1 invest", nftCrowdFund.getInvestment(user1));
+        vm.stopPrank();
+        // vm.roll(3);
+        vm.startPrank(user1);
+        nftCrowdFund.investorWithdrawRevenue();
+        nftCrowdFund.investorWithdrawRevenue();
+        console2.log("already withdraw revenue", nftCrowdFund.alreadyWithdrawRevenue(user1));
+        assertEq(nftCrowdFund.alreadyWithdrawRevenue(user1), 1e14);
+    }
+    function testTransfer() public {
+        vm.startPrank(user1);
+        nftCrowdFund.invest{value: 1 ether}();
+        vm.stopPrank();
+        vm.startPrank(user2);
+        nftCrowdFund.invest{value: 1 ether}();
+        vm.roll(4);
+        nftCrowdFund.mint{value: 0.001 ether}(user2, 1);
+        nftCrowdFund.transferFrom{value: 0.001 ether}(user2, user1, 1);
+        vm.stopPrank();
+        // vm.roll(3);
+        vm.startPrank(user1);
+        nftCrowdFund.investorWithdrawRevenue();
+        nftCrowdFund.investorWithdrawRevenue();
+        console2.log("already withdraw revenue", nftCrowdFund.alreadyWithdrawRevenue(user1));
+        assertEq(nftCrowdFund.alreadyWithdrawRevenue(user1), 2e14);
     }
 
     // function setUp() public {
