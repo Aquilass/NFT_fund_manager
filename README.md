@@ -46,7 +46,14 @@ https://www.figma.com/file/4MMYEkrObr2bTrOUsnM0pZ/Untitled?type=whiteboard&node-
 #### 測試覆蓋率
 ![contract Analysing, test coverage](readmeImgs/forgetestcoverage.png)
 
-
+#### 如何跑 Test
+修改 example.env
+需改 SEPOLIA_RPC_URL=
+之後執行
+```sh
+forge install
+forge test
+```
 
 
 source:
