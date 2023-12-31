@@ -1,5 +1,5 @@
 
-## Gang Manager & CrowdFund
+## NFT Manager & CrowdFund
 
 ### 角色:
 #### Gang Guarantor (基金管理人 & 眾籌 NFT 項目 保證人)
