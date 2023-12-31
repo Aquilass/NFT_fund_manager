@@ -113,7 +113,7 @@ contract GangCrowdFund is ERC721URIStorage, ReentrancyGuard {
         _mint(to, tokenId);
     }
     function projectOwnerWithdrawInvest() external payable onlyOwner nonReentrant {
-        require(block.number <= initialBlock + investTimeBlock, "invest time is over or withdraw time not yet come");
+        require(block.number <= initialBlock + investTimeBlock + withdrawTimeBlock, "invest time is over or withdraw time not yet come");
         address payable receiver = payable(msg.sender);
         receiver.transfer(address(this).balance);
     }
