@@ -30,6 +30,17 @@ NFT fund raising project
 流程圖:
 ![[nft final project.png]]
 
+如何跑 Test
+修改 example.env
+需改 SEPOLIA_RPC_URL=
+之後執行
+```sh
+forge install
+forge test
+```
+
+
+
 source:
 [Introducing ERC721-C: A New Standard for Enforceable On-Chain Programmable Royalties | by Limit Break Dev | Limit Break | Medium](https://medium.com/limit-break/introducing-erc721-c-a-new-standard-for-enforceable-on-chain-programmable-royalties-defaa127410)
 
