@@ -43,7 +43,7 @@
 https://www.figma.com/file/4MMYEkrObr2bTrOUsnM0pZ/Untitled?type=whiteboard&node-id=0%3A1&t=tOkFscjOVLI81h46-1
 
 #### 測試覆蓋率
-![contract Analysing, test coverage](readmeImgs/image.png)
+![contract Analysing, test coverage](readmeImgs/forgetestcoverage.png)
 
 
 
