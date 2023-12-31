@@ -37,9 +37,10 @@
 7. Gang Manager 會設定 redeem 時間，當時間到的時候， user 可以將本金贖回加上投資收益 (mint fee & priority fee 抽成)。
 8. Gang Manager owner & manager 領取相對應的收益。
 
-架構圖:
+#### 架構圖:
 ![structure diagram](readmeImgs/structureDiagram.png)
-架構圖 (Figma 連結)
+
+架構圖 (Figma 連結) : 
 https://www.figma.com/file/4MMYEkrObr2bTrOUsnM0pZ/Untitled?type=whiteboard&node-id=0%3A1&t=tOkFscjOVLI81h46-1
 
 #### 測試覆蓋率
