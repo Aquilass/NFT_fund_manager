@@ -12,12 +12,13 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 // import "./gangManagerBase.sol";
 import "../nft-crowdfund/gangCrowdFund.sol";
 import "../nft-crowdfund/IGangCrowdFund.sol";
+import "../weth/IWETH.sol";
 
 contract GangManager is ERC20, ReentrancyGuard {
     enum CrowdFundOperation {
         invest,
-        managerWithdrawInvest,
-        managerWithdrawRevenue,
+        investManagerWithdrawInvest,
+        investManagerWithdrawRevenue,
         undefined,
         prohibited
     }
@@ -141,20 +142,17 @@ contract GangManager is ERC20, ReentrancyGuard {
 
     function _insuranceReveue() internal{
         uint256 wethInsurance = ERC20(weth).allowance(guarantor, address(this));
-        ERC20(weth).transferFrom(guarantor, address(this), wethInsurance);
-        bytes memory withdrawWethData = abi.encodeWithSignature("withdraw(uint256)", wethInsurance);
-        (bool success, bytes memory revertData) = guarantor.call(withdrawWethData);
-        if (!success) {
-            revert FailedToOperateError(guarantor, wethInsurance);
-        }
+        IWETH(weth).transferFrom(guarantor, address(this), wethInsurance);
+        IWETH(weth).withdraw(wethInsurance);
+        totalRevenue += wethInsurance;
     }
 
     function ownerWithdrawRevenue() public payable onlyOwner nonReentrant{
-        require(block.number> initialBlock + investPhase + managerInvestPhase + redeemPhase);
-        require(address(this).balance > 0);
-        if(totalRevenue < totalInvestment * insuranceThreshold / 1000){
-            _insuranceReveue();
-        }
+        require(block.number> initialBlock + investPhase + managerInvestPhase + redeemPhase, "redeem phase is not over");
+        require(address(this).balance > 0, "balance is zero");
+        // require total revenue is greater than insurance threshold and  
+        uint256 contractHoldShare =  managerRevenueShare + ownerRevenueShare + guarantorRevenueShare;
+        require(totalRevenue > totalInvestment * insuranceThreshold / 1000 * 1000 / contractHoldShare, "total revenue is not greater than insurance threshold");
         uint256 ownerRevenue = totalRevenue * ownerRevenueShare / 1000;
         address payable receiver = payable(msg.sender);
         (bool success, ) = receiver.call{value: ownerRevenue}("");
@@ -163,11 +161,10 @@ contract GangManager is ERC20, ReentrancyGuard {
     }
 
     function managerWithdrawRevenue() public payable onlyManager nonReentrant{
-        require(block.number> initialBlock + investPhase + managerInvestPhase + redeemPhase);
-        require(address(this).balance > 0);
-        if(totalRevenue < totalInvestment * insuranceThreshold / 1000){
-            _insuranceReveue();
-        }
+        require(block.number> initialBlock + investPhase + managerInvestPhase + redeemPhase, "redeem phase is not over");
+        require(address(this).balance > 0, "balance is zero");
+        uint256 contractHoldShare =  managerRevenueShare + ownerRevenueShare + guarantorRevenueShare;
+        require(totalRevenue > totalInvestment * insuranceThreshold / 1000 * 1000 / contractHoldShare, "total revenue is not greater than insurance threshold");
         address payable receiver = payable(msg.sender);
         uint256 managerRevenue = totalRevenue * managerRevenueShare / 1000;
         (bool success, ) = receiver.call{value: managerRevenue}("");
@@ -185,7 +182,7 @@ contract GangManager is ERC20, ReentrancyGuard {
 
     //investor functions
     function investorInvest(address to) public payable  nonReentrant{
-        require(block.number>= initialBlock + investPhase, "invest phase not start");
+        require(block.number <= initialBlock + investPhase, "invest phase is over");
         require(msg.value > 0.001 ether, "invest amount must greater than 0.001 ether");
         _mint(to, msg.value);
         totalInvestment += msg.value;
@@ -208,8 +205,9 @@ contract GangManager is ERC20, ReentrancyGuard {
         require(block.number> initialBlock + investPhase + managerInvestPhase || block.number < initialBlock + investPhase);
         require(address(this).balance > 0);
         require(investment[msg.sender] > 0);
-        investment[msg.sender] = 0;
         _burn(msg.sender, investment[msg.sender]);
+        investment[msg.sender] = 0;
+        totalInvestment -= amount;
         address payable receiver = payable(msg.sender);
         (bool success, ) = receiver.call{value: investment[msg.sender]}("");
         require(success, "Transfer failed.");
@@ -218,8 +216,8 @@ contract GangManager is ERC20, ReentrancyGuard {
     // manager funcotions
 
 
-    function checkVerified(address target) public view returns (bool) {
-        return ERC20(weth).allowance(address(this), manager) > 0;
+    function checkVerified() public view returns (bool) {
+        return ERC20(weth).allowance(guarantor, address(this)) > 0;
     }
 
     function checkTargetVerified(address _target) public view returns (bool) {
@@ -237,18 +235,17 @@ contract GangManager is ERC20, ReentrancyGuard {
     }
 
     function _managerOperations(
-        address token,
         address payable callTarget,
-        bool onlyInvestVerifiedGangCrowdFund,
         uint256 callValue,
         bytes memory callData
     ) internal returns (bool success, bytes memory revertData) {
         // Check that the call is not prohibited.
-        (bool isAllowed, CrowdFundOperation operation) = _isCallAllowed(callTarget, onlyInvestVerifiedGangCrowdFund,callData, token);
+        (bool isAllowed, CrowdFundOperation operation) = _isCallAllowed(callTarget,callData);
         if (!isAllowed) {
             revert CallProhibitedError(callTarget, callData);
         }
         // Check that the call value is under the maximum percentange.
+        if (operation == CrowdFundOperation.invest)
         {
             uint256 targetValue = targetInvestment[callTarget];
             uint256 maximumPrice_ = totalInvestment * maximuInvestPercentage / 1000;
@@ -270,10 +267,10 @@ contract GangManager is ERC20, ReentrancyGuard {
             totalTargetInvestment += callValue;
             return (true, r);
         }
-        else if (operation == CrowdFundOperation.managerWithdrawInvest) {
+        else if (operation == CrowdFundOperation.investManagerWithdrawInvest) {
             return (true, r);
         }
-        else if (operation == CrowdFundOperation.managerWithdrawRevenue) {
+        else if (operation == CrowdFundOperation.investManagerWithdrawRevenue) {
             return (true, r);
         }
         else {
@@ -286,15 +283,13 @@ contract GangManager is ERC20, ReentrancyGuard {
 
     function _isCallAllowed(
         address payable callTarget,
-        bool onlyInvestVerifiedGangCrowdFund,
-        bytes memory callData,
-        address token
+        bytes memory callData
     ) private view returns (bool isAllowed,CrowdFundOperation operation) {
         // Ensure the call target isn't trying to reenter
         if (callTarget == address(this)) {
             return (false, CrowdFundOperation.prohibited);
         }
-        if (callTarget == address(token) && callData.length >= 4) {
+        if (callData.length >= 4) {
             // Get the function selector of the call (first 4 bytes of calldata).
             bytes4 selector;
             assembly {
@@ -309,14 +304,14 @@ contract GangManager is ERC20, ReentrancyGuard {
                 return (true, CrowdFundOperation.invest);
             }
             else if (
-                selector == IGangCrowdFund.managerWithdrawInvest.selector
+                selector == IGangCrowdFund.investManagerWithdrawInvest.selector
             ) {
-                return (true, CrowdFundOperation.managerWithdrawInvest);
+                return (true, CrowdFundOperation.investManagerWithdrawInvest);
             }
             else if (
-                selector == IGangCrowdFund.managerWithdrawRevenue.selector
+                selector == IGangCrowdFund.investManagerWithdrawRevenue.selector
             ) {
-                return (true, CrowdFundOperation.managerWithdrawRevenue);
+                return (true, CrowdFundOperation.investManagerWithdrawRevenue);
             }
             else {
                 return (false, CrowdFundOperation.undefined);
@@ -327,7 +322,6 @@ contract GangManager is ERC20, ReentrancyGuard {
         }
     }
     function managerOperations(
-        address nftContract,
         address payable callTarget,
         uint256 callValue,
         bytes memory callData
@@ -335,14 +329,12 @@ contract GangManager is ERC20, ReentrancyGuard {
         require(msg.sender == manager);
         // This function can be optionally restricted in different ways.
         if (managerOnlyInvestVerified) {
-            require(this.checkTargetVerified(nftContract) == true, "nftContract is not verified");
+            require(this.checkTargetVerified(callTarget) == true, "nftContract is not verified");
         } 
 
         // Buy the NFT and check NFT is owned by the crowdfund.
         (bool success, bytes memory revertData) = _managerOperations(
-            nftContract,
             callTarget,
-            managerOnlyInvestGangCrowdFund,
             callValue,
             callData
         );
@@ -351,7 +343,7 @@ contract GangManager is ERC20, ReentrancyGuard {
             if (revertData.length > 0) {
                 revert(string(revertData));
             } else {
-                revert FailedToOperateError(nftContract, callValue);
+                revert FailedToOperateError(callTarget, callValue);
             }
         }
 
@@ -392,7 +384,7 @@ contract GangManager is ERC20, ReentrancyGuard {
         }
     }
     receive() external payable {
-        totalRevenue += msg.value;
+        // totalRevenue += msg.value;
     }
     fallback() external payable {
         totalRevenue += msg.value;

@@ -164,7 +164,7 @@ contract GangCrowdFund is ERC721URIStorage, ReentrancyGuard {
         require(success, "Transfer failed.");
     }
 
-    function managerWithdrawInvest(uint256 amount) external nonReentrant payable {
+    function investManagerWithdrawInvest(uint256 amount) external nonReentrant payable {
         require(investment[msg.sender] > 0);
         require(amount <= investment[msg.sender]);
         require(block.number >= initialBlock + investTimeBlock + withdrawTimeBlock || block.number <= initialBlock + investTimeBlock, "invest time is over or withdraw time not yet come");
@@ -174,7 +174,7 @@ contract GangCrowdFund is ERC721URIStorage, ReentrancyGuard {
         (bool success, ) = receiver.call{value: amount}(data);
         // return investment[msg.sender];
     }
-    function managerWithdrawRevenue() external nonReentrant payable returns (uint256 received){
+    function investManagerWithdrawRevenue() external nonReentrant payable returns (uint256 received){
         address payable receiver = payable(msg.sender);
         require(investment[msg.sender] > 0);
         require(block.number > initialBlock + investTimeBlock);
@@ -186,7 +186,7 @@ contract GangCrowdFund is ERC721URIStorage, ReentrancyGuard {
         console2.log("investor withdraw revenue", investorTotalShare - alreadyWithdrawRevenue[msg.sender]);
         uint256 investorWithdrawRevenue = investorTotalShare - alreadyWithdrawRevenue[msg.sender];
         alreadyWithdrawRevenue[msg.sender] += investorWithdrawRevenue;
-        bytes memory data = abi.encodeWithSignature("withdrawTargetInvest(address,uint256)", address(this), investorWithdrawRevenue);
+        bytes memory data = abi.encodeWithSignature("withdrawTargetRevenue(address,uint256)", address(this), investorWithdrawRevenue);
         (bool success, ) = receiver.call{value: investorWithdrawRevenue}(data);
         require(success, "Transfer failed.");
         return investorWithdrawRevenue;
