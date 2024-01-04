@@ -141,7 +141,7 @@ contract GangManager is ERC20, ReentrancyGuard {
     event Withdraw(address indexed _from, uint256 _value);
 
     function _insuranceReveue() internal{
-        uint256 wethInsurance = ERC20(weth).allowance(guarantor, address(this));
+        uint256 wethInsurance = IWETH(weth).allowance(guarantor, address(this));
         IWETH(weth).transferFrom(guarantor, address(this), wethInsurance);
         IWETH(weth).withdraw(wethInsurance);
         totalRevenue += wethInsurance;
@@ -217,11 +217,11 @@ contract GangManager is ERC20, ReentrancyGuard {
 
 
     function checkVerified() public view returns (bool) {
-        return ERC20(weth).allowance(guarantor, address(this)) > 0;
+        return IWETH(weth).allowance(guarantor, address(this)) > 0;
     }
 
     function checkTargetVerified(address _target) public view returns (bool) {
-        return ERC20(weth).allowance(guarantor,_target) > 0;
+        return IWETH(weth).allowance(guarantor,_target) > 0;
     }
     function withdrawTargetInvest(address _target, uint256 amount) public payable onlyTarget() {
         require(targetInvestment[msg.sender] > 0);
