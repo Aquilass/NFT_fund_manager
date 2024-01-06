@@ -40,6 +40,7 @@ contract GangManager is ERC20, ReentrancyGuard {
     uint256 investorRevenueShare = 0;
     // insurance setting
     uint256 public insuranceThreshold = 0;
+    bool public insuranceCompensated = false;
     // total amount of NFTManager
     uint256 public totalInvestment = 0;
     uint256 public totalRevenue = 0;
@@ -53,7 +54,7 @@ contract GangManager is ERC20, ReentrancyGuard {
     // phase timelock
     uint256 public investPhase = 0;
     uint256 public managerInvestPhase = 0;
-    uint256 public redeemPhase = 0;
+    uint256 public investorRedeemPhase = 0;
 
     // manager contract invest target setting
     bool public managerOnlyInvestVerified = true;
@@ -78,7 +79,7 @@ contract GangManager is ERC20, ReentrancyGuard {
         // manager phase setting
         uint256 investPhase;
         uint256 managerInvestPhase;
-        uint256 redeemPhase;
+        uint256 investorRedeemPhase;
         // manager contract general setting
         uint256 goal;
         uint256 maximuInvestPercentage;
@@ -110,7 +111,7 @@ contract GangManager is ERC20, ReentrancyGuard {
         insuranceThreshold = _initData.insuranceThreshold;
         investPhase = _initData.investPhase;
         managerInvestPhase = _initData.managerInvestPhase;
-        redeemPhase = _initData.redeemPhase;
+        investorRedeemPhase = _initData.investorRedeemPhase;
         goal = _initData.goal;
         maximuInvestPercentage = _initData.maximuInvestPercentage;
         managerOnlyInvestVerified = _initData.managerOnlyInvestVerified;
@@ -148,9 +149,9 @@ contract GangManager is ERC20, ReentrancyGuard {
     }
 
     function ownerWithdrawRevenue() public payable onlyOwner nonReentrant{
-        require(block.number> initialBlock + investPhase + managerInvestPhase + redeemPhase, "redeem phase is not over");
+        require(block.number> initialBlock + investPhase + managerInvestPhase + investorRedeemPhase, "redeem phase is not over");
         require(address(this).balance > 0, "balance is zero");
-        // require total revenue is greater than insurance threshold and  
+        // require total revenue is greater than insurance threshold and exclude contract hold share
         uint256 contractHoldShare =  managerRevenueShare + ownerRevenueShare + guarantorRevenueShare;
         require(totalRevenue > totalInvestment * insuranceThreshold / 1000 * 1000 / contractHoldShare, "total revenue is not greater than insurance threshold");
         uint256 ownerRevenue = totalRevenue * ownerRevenueShare / 1000;
@@ -161,7 +162,7 @@ contract GangManager is ERC20, ReentrancyGuard {
     }
 
     function managerWithdrawRevenue() public payable onlyManager nonReentrant{
-        require(block.number> initialBlock + investPhase + managerInvestPhase + redeemPhase, "redeem phase is not over");
+        require(block.number> initialBlock + investPhase + managerInvestPhase + investorRedeemPhase, "redeem phase is not over");
         require(address(this).balance > 0, "balance is zero");
         uint256 contractHoldShare =  managerRevenueShare + ownerRevenueShare + guarantorRevenueShare;
         require(totalRevenue > totalInvestment * insuranceThreshold / 1000 * 1000 / contractHoldShare, "total revenue is not greater than insurance threshold");
@@ -190,10 +191,11 @@ contract GangManager is ERC20, ReentrancyGuard {
         emit Invest(to, msg.value);
     }
     function investorWithdrawRevenue() public payable onlyInvestor  nonReentrant{
-        require(block.number> initialBlock + investPhase + managerInvestPhase);
+        require(block.number> initialBlock + investPhase + managerInvestPhase && block.number < initialBlock + investPhase + managerInvestPhase + investorRedeemPhase, "wrong phase");
         require(investment[msg.sender] > 0);
         require(address(this).balance > 0);
-        if(totalRevenue < totalInvestment * insuranceThreshold / 1000){
+        if(totalRevenue < totalInvestment * insuranceThreshold / 1000 && insuranceCompensated == false) {
+            insuranceCompensated = true;
             _insuranceReveue();
         }
         uint256 investorRevenue = investment[msg.sender] * investorRevenueShare / 1000;
@@ -326,6 +328,7 @@ contract GangManager is ERC20, ReentrancyGuard {
         uint256 callValue,
         bytes memory callData
     ) external payable onlyManager returns (bool success) {
+        require(block.number > initialBlock + investPhase && block.number < initialBlock + investPhase + managerInvestPhase, "wrong phase");
         require(msg.sender == manager);
         // This function can be optionally restricted in different ways.
         if (managerOnlyInvestVerified) {
@@ -376,7 +379,7 @@ contract GangManager is ERC20, ReentrancyGuard {
         else if (block.number < initialBlock + investPhase + managerInvestPhase) {
             return "manager invest phase";
         }
-        else if (block.number < initialBlock + investPhase + managerInvestPhase + redeemPhase) {
+        else if (block.number < initialBlock + investPhase + managerInvestPhase + investorRedeemPhase) {
             return "redeem phase";
         }
         else {

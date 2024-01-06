@@ -46,14 +46,20 @@ contract gangManagerTest is Test {
         vm.startPrank(gangCrowdFundOwner);
         // GangCrowdFund setup
         GangCrowdFund.GangCrowdFundOpts memory crowdFundOpts;
-        crowdFundOpts = GangCrowdFund.GangCrowdFundOpts("chickenGangGang", "CGG", address(nftGuarantor), 15, //investTimeBlock
-                20, // withdrawTimeBlock
+        crowdFundOpts = GangCrowdFund.GangCrowdFundOpts("chickenGangGang", "CGG", address(nftGuarantor), 
+                15, // investPhase
+                20, // investorsWithdrawPhase
+                20, // investorsExitPhase
                 200, // investorRevenueShare
                 200, // investorRoyaltyShare
-                800, // projectOwnerRevenueShare
-                800, // projectOwnerRoyaltyShare
+                750, // projectOwnerRevenueShare
+                750, // projectOwnerRoyaltyShare
+                50, // guarantorRevenueShare
+                50, // guarantorRoyaltyShare
                 0.01 ether, // floorPrice
-                0.001 ether // fee
+                0.001 ether, // fee
+                200, // insuranceThreshold
+                0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9 // weth address
         );
         nftCrowdFund = new GangCrowdFund(crowdFundOpts);
         nftCrowdFund.setTokenURI(1, "https://ipfs.test.com");
@@ -73,7 +79,7 @@ contract gangManagerTest is Test {
                 200, // insuranceThreshold
                 10, // investPhase
                 20, // managerInvestPhase
-                10, //redeemPhase
+                10, //investorRedeemPhase
                 0, //goal
                 200, // maximuInvestPercentage
                 true, // managerOnlyInvestVerified
@@ -153,7 +159,7 @@ contract gangManagerTest is Test {
         nftCrowdFund.investorWithdrawRevenue();
         // nftCrowdFund.investorWithdrawRevenue();
         console2.log("already withdraw revenue", nftCrowdFund.alreadyWithdrawRevenue(user1));
-        assertEq(nftCrowdFund.alreadyWithdrawRevenue(user1), 1e15);
+        assertEq(nftCrowdFund.alreadyWithdrawRevenue(user1),50001000000000000000 );
     }
     function test_crowdfund_mint_transfer_withdraw()public {
         vm.startPrank(gangCrowdFundOwner);
