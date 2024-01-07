@@ -119,16 +119,16 @@ forge script script/deployGang.s.sol:deployGangCrowdfund --broadcast --verify --
 forge install
 forge test
 ```
-
+---
 #### Testing
-[PASS] test_init() (gas: 12324) 測試初始化一切正常
-[PASS] testMint() (gas: 318270) 測試用戶在 NFT 眾籌可以 Mint
-[PASS] test_CrowdFund_invest_withdraw() (gas: 137247) 測試用戶在 NFT 眾籌可以投資和領出資金
-[PASS] test_crowdfund_mint_transfer_withdraw() (gas: 614164) 測試用戶可以在 Crowdfund
-[PASS] test_guarantor_functions() (gas: 54548) 測試擔保人操作
-[PASS] test_manager_invest_withdraw_crowdfund() (gas: 487638) 測試基金管理人投資 NFT 眾籌
-[PASS] test_manager_whole_process_with_deficit() (gas: 713837) 測試基金管理人完成所有流程負收益時的情況
-[PASS] test_manager_whole_process_with_profit() (gas: 957128) 測試基金管理人完成所有流程正收益時的情況
+test_init() (gas: 12324) 測試初始化一切正常
+testMint() (gas: 318270) 測試用戶在 NFT 眾籌可以 Mint
+test_CrowdFund_invest_withdraw() (gas: 137247) 測試用戶在 NFT 眾籌可以投資和領出資金
+test_crowdfund_mint_transfer_withdraw() (gas: 614164) 測試用戶可以在 Crowdfund
+test_guarantor_functions() (gas: 54548) 測試擔保人操作
+test_manager_invest_withdraw_crowdfund() (gas: 487638) 測試基金管理人投資 NFT 眾籌
+test_manager_whole_process_with_deficit() (gas: 713837) 測試基金管理人完成所有流程負收益時的情況
+test_manager_whole_process_with_profit() (gas: 957128) 測試基金管理人完成所有流程正收益時的情況
 ---
 #### 測試覆蓋率
 ![contract Analysing, test coverage](readmeImgs/forgetestcoverage.png)
