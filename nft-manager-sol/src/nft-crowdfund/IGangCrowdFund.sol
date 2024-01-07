@@ -5,6 +5,8 @@ pragma solidity ^0.8.20;
 
 interface IGangCrowdFund {
     function invest() external payable returns (uint256);
+
     function investManagerWithdrawInvest(uint256 amount) external returns (uint256);
+
     function investManagerWithdrawRevenue() external returns (uint256);
 }
