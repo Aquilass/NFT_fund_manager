@@ -121,15 +121,15 @@ forge test
 ```
 ---
 #### Testing
+test_init() - 測試初始化一切正常
+testMint() - 測試用戶在 NFT 眾籌可以 Mint
+test_CrowdFund_invest_withdraw() - 測試用戶在 NFT 眾籌可以投資和領出資金
+test_crowdfund_mint_transfer_withdraw() - 測試用戶可以在 Crowdfund
+test_guarantor_functions() - 測試擔保人操作
+test_manager_invest_withdraw_crowdfund() - 測試基金管理人投資 NFT 眾籌
+test_manager_whole_process_with_deficit() - 測試基金管理人完成所有流程負收益時的情況
+test_manager_whole_process_with_profit() - 測試基金管理人完成所有流程正收益時的情況
 
-test_init - 測試初始化一切正常
-testMint - 測試用戶在 NFT 眾籌可以 Mint
-test_CrowdFund_invest_withdraw - 測試用戶在 NFT 眾籌可以投資和領出資金
-test_crowdfund_mint_transfer_withdraw - 測試用戶可以在 Crowdfund
-test_guarantor_functions 測試擔保人操作
-test_manager_invest_withdraw_crowdfund - 測試基金管理人投資 NFT 眾籌
-test_manager_whole_process_with_deficit - 測試基金管理人完成所有流程負收益時的情況
-test_manager_whole_process_with_profit - 測試基金管理人完成所有流程正收益時的情況
 ---
 #### 測試覆蓋率
 ![contract Analysing, test coverage](readmeImgs/forgetestcoverage.png)
