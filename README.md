@@ -56,6 +56,16 @@ https://www.figma.com/file/4MMYEkrObr2bTrOUsnM0pZ/Untitled?type=whiteboard&node-
 #### 所有相關模組
 ![modules](readmeImgs/modules.png)
 ---
+#### 流程
+1. 先建立 GangCrowdFund，開放投資者投資
+2. 建立 Gang Manager， 並設定是否只能投資經過 Gang Guarantor 認證過的 GangCrowdFund，之後開放投資者投資基金。
+3. Gang Manager 投資 GangCrowdFund，並等待 GangCrowdFund 開放給用戶 mint 與 transfer
+4. GangCrowdFund 提取資金用作宣傳，並開放用戶 mint NFT
+5. 當 Gang CrowdFund 有 user mint 或 transfer 的時候，Gang Manager 呼叫 GangCrowdFund 收取抽成費用。
+6. Gang Manager 將投資於 Gang CrowdFund 的收益收回。
+7. Gang Manager 會設定 redeem 時間，當時間到的時候， user 可以將本金贖回加上投資收益 (mint fee & priority fee 抽成)。
+8. Gang Manager owner & manager 領取相對應的收益。
+---
 #### 擔保人合約( gangGuarantor ) 流程
 ![gangGuarantor](readmeImgs/gangGuarantor.png)
 ---
@@ -70,19 +80,9 @@ https://www.figma.com/file/4MMYEkrObr2bTrOUsnM0pZ/Untitled?type=whiteboard&node-
 ---
 #### 管理人合約 ( gangManager) 時間線
 ![gangManagertimeline](readmeImgs/gangManagertimeline.png)
-
+---
 ### 整體 (overview) 
 ![overview](readmeImgs/overview.png)
-
-#### 流程
-1. 先建立 GangCrowdFund，開放投資者投資
-2. 建立 Gang Manager， 並設定是否只能投資經過 Gang Guarantor 認證過的 GangCrowdFund，之後開放投資者投資基金。
-3. Gang Manager 投資 GangCrowdFund，並等待 GangCrowdFund 開放給用戶 mint 與 transfer
-4. GangCrowdFund 提取資金用作宣傳，並開放用戶 mint NFT
-5. 當 Gang CrowdFund 有 user mint 或 transfer 的時候，Gang Manager 呼叫 GangCrowdFund 收取抽成費用。
-6. Gang Manager 將投資於 Gang CrowdFund 的收益收回。
-7. Gang Manager 會設定 redeem 時間，當時間到的時候， user 可以將本金贖回加上投資收益 (mint fee & priority fee 抽成)。
-8. Gang Manager owner & manager 領取相對應的收益。
 ---
 
 ### Development
@@ -121,14 +121,14 @@ forge test
 ```
 
 #### Testing
-[PASS] testMint() (gas: 318270)
-[PASS] test_CrowdFund_invest_withdraw() (gas: 137247)
-[PASS] test_crowdfund_mint_transfer_withdraw() (gas: 614164)
-[PASS] test_guarantor_functions() (gas: 54548)
-[PASS] test_init() (gas: 12324)
-[PASS] test_manager_invest_withdraw_crowdfund() (gas: 487638)
-[PASS] test_manager_whole_process_with_deficit() (gas: 713837)
-[PASS] test_manager_whole_process_with_profit() (gas: 957128)
+[PASS] test_init() (gas: 12324) 測試初始化一切正常
+[PASS] testMint() (gas: 318270) 測試用戶在 NFT 眾籌可以 Mint
+[PASS] test_CrowdFund_invest_withdraw() (gas: 137247) 測試用戶在 NFT 眾籌可以投資和領出資金
+[PASS] test_crowdfund_mint_transfer_withdraw() (gas: 614164) 測試用戶可以在 Crowdfund
+[PASS] test_guarantor_functions() (gas: 54548) 測試擔保人操作
+[PASS] test_manager_invest_withdraw_crowdfund() (gas: 487638) 測試基金管理人投資 NFT 眾籌
+[PASS] test_manager_whole_process_with_deficit() (gas: 713837) 測試基金管理人完成所有流程負收益時的情況
+[PASS] test_manager_whole_process_with_profit() (gas: 957128) 測試基金管理人完成所有流程正收益時的情況
 ---
 #### 測試覆蓋率
 ![contract Analysing, test coverage](readmeImgs/forgetestcoverage.png)
