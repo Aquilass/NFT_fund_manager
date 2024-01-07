@@ -121,6 +121,7 @@ forge test
 ```
 ---
 #### Testing
+
 test_init - 測試初始化一切正常
 testMint - 測試用戶在 NFT 眾籌可以 Mint
 test_CrowdFund_invest_withdraw - 測試用戶在 NFT 眾籌可以投資和領出資金
